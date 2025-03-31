@@ -204,3 +204,5 @@ theta_scores_students %>%
   facet_grid(cols = vars(judge_group)) +
   labs(title = "Perceived Difficulty by Students (With vs Without Solution)",
        x = "Theta", y = "Proof")
+
+
