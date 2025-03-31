@@ -10,11 +10,14 @@ library(readr)
 
 # ----Import dataset----
 Actual_grade <- read_csv("ANON_2020-21diagtestSep.csv")
+
 expert_even <- read_csv("experts-even.csv")
 expert_odd <- read_csv("experts-odd.csv")
 experts_withsolutions <- read_csv("experts-withsolutions.csv")
+
 students_even <- read_csv("students-even.csv")
 students_odd <- read_csv("students-odd.csv")
+
 students_withoutsolutions <- read_csv("students-withoutsolutions.csv")
 
 students_withsolutions <- read_csv("students-withsolutions.csv") # 20 judges, 20 comparisons
@@ -241,11 +244,23 @@ rigour_scores %>%
   ggpubr::stat_cor() +
   facet_wrap(~ method, scales = "free")
 
+# Compare correlation of raw scores vs theta scores
+cor_test_raw_vs_theta <- cor.test(
+  rigour_scores %>% filter(judge_group == "expert") %>% pull(propscore),
+  rigour_scores %>% filter(judge_group == "expert") %>% pull(theta)
+)
+rigour_scores %>%
+  filter(judge_group %in% c("expert", "student")) %>%
+  select(judge_group, id, theta) %>%
+  pivot_wider(names_from = judge_group, values_from = theta) %>%
+  cor(method = "spearman")
 
-#-----Actual-----
+btm_estimates %>%
+  mutate(residual = student_theta - predict(lm(student_theta ~ expert_theta))) %>%
+  arrange(desc(residual))  # top n student-overrated
 
 # ----odd-----
 
 # ---- even----
 
-
+#-----Actual-----
