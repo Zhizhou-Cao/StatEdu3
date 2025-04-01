@@ -262,9 +262,9 @@ print(reliability_table)
 #'observed for the Even Questions – Student group (SSR = 0.896), indicating particularly strong
 #' agreement among student raters in that subset.
 
-However, the SHR values were notably lower than the SSRs, which is expected due to the stricter split-half criterion. The WithSolution – Student group had the lowest SHR (0.597), potentially suggesting greater variability between subgroups of student judges. In contrast, Even – Student group reached an SHR of 0.730, indicating reasonably stable results across judge subsets.
-
-Overall, expert judgements showed moderately higher SSR than students on WithSolution and Odd datasets, whereas students outperformed experts in the Even dataset.
+# However, the SHR values were notably lower than the SSRs, which is expected due to the stricter split-half criterion. The WithSolution – Student group had the lowest SHR (0.597), potentially suggesting greater variability between subgroups of student judges. In contrast, Even – Student group reached an SHR of 0.730, indicating reasonably stable results across judge subsets.
+# 
+# Overall, expert judgements showed moderately higher SSR than students on WithSolution and Odd datasets, whereas students outperformed experts in the Even dataset.
 
 
 
