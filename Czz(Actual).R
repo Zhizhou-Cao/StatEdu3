@@ -32,8 +32,6 @@ average_scores <- average_scores %>%
 # 查看结果
 print(average_scores)
 
-
-
 # Step 1: 合并 expert 和 student 的 CJ 评分
 cj_scores <- left_join(
   btm_estimates_student_all %>% select(individual, student_theta),
@@ -99,7 +97,8 @@ plot_student <- student_vs_actual %>%
        x = "Actual Average Grade",
        y = "Student Perceived Quality (θ)")
 
-plot_expert/plot_student 
+plot_expert
+plot_student 
 
 
 #----plot----
