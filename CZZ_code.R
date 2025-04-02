@@ -197,10 +197,10 @@ rigour_scores %>%
     join_by(id)
   ) %>% 
   mutate(
-    proof = as.factor(id) %>% fct_reorder(researcher_theta),
+    Question_id = as.factor(id) %>% fct_reorder(researcher_theta),
     judge_group = fct_relevel(judge_group, "expert", "student")
   ) %>% 
-  ggplot(aes(x = theta, y = proof)) +
+  ggplot(aes(x = theta, y = Question_id)) +
   geom_point() +
   facet_grid(cols = vars(judge_group))
 
@@ -490,5 +490,120 @@ plot_actual <- average_scores %>%
     x = "Average Grade", y = "Proof (Ranked by Student Theta)"
   )
 plot_expert + plot_student + plot_actual
+
+
+student_vs_actual$student_theta
+btm_estimates_student_all$student_theta
+student_vs_actual$average
+average_scores$average
+# 准备数据
+regression_data <- tibble(
+  student_theta = btm_estimates_student_all$student_theta,
+  average_score = average_scores$average,
+  expert_theta =  btm_estimates_expert_all$expert_theta
+)
+
+# 执行线性回归
+model <- lm(student_theta ~average , data = student_vs_actual)
+
+# 查看回归结果
+summary(model)
+
+library(ggplot2)
+
+ggplot(student_vs_actual, aes(x =student_theta , y = average)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  labs(
+    title = "Linear Regression: Average Score ~ Theta",
+    x = "BTM Theta (student)",
+    y = "Average Score"
+  )
+
+# ---SSR----
+ssr_values <- tibble(
+  judge_group = c("expert", "student"),
+  SSR = c(
+    btm_results_expert_all$sepG^2 / (1 + btm_results_expert_all$sepG^2),
+    btm_results_student_all$sepG^2 / (1 + btm_results_student_all$sepG^2)
+  )
+)
+
+# ----- SHR-----
+# 给 expert_data 添加 judge_group = "expert"
+experts_withsolutions<- experts_withsolutions %>%
+  mutate(judge_group = "expert")
+
+# 给 student_data 添加 judge_group = "student"
+students_withsolutions <- students_withsolutions %>%
+  mutate(judge_group = "student")
+
+# 合并两者
+withsolution_combined <- bind_rows(experts_withsolutions, students_withsolutions)
+# copied from the lecture notes:
+compute_split_half_irr <- function(decisions_data) {
+  
+  # Prepare to use sirt::btm - the third column indicates
+  # which of the first two was the winner, with 1 = leftmost
+  decisions <- decisions_data %>% 
+    mutate(winning_column = 1) %>% 
+    select(candidate_chosen, candidate_not_chosen, winning_column, judge)
+  
+  # Group 1: sample half of the judges at random
+  judge_group1 <- decisions %>%
+    select(judge) %>%
+    distinct() %>%
+    slice_sample(prop = 0.5)
+  # Group 2: the remaining judges
+  judge_group2 <- decisions %>%
+    select(judge) %>%
+    distinct() %>%
+    anti_join(judge_group1, by = c("judge"))
+  
+  # Separate the judgements from each group
+  judgements1 <- decisions %>% semi_join(judge_group1, by = "judge")
+  judgements2 <- decisions %>% semi_join(judge_group2, by = "judge")
+  
+  # Fit the Bradley-Terry model for each group separately
+  # (using purrr::quietly to suppress output from sirt::btm)
+  btm1 <- purrr::quietly(sirt::btm)(
+    judgements1 %>% data.frame,
+    maxit = 400,
+    fix.eta = 0,
+    ignore.ties = TRUE
+  )$result
+  btm2 <- purrr::quietly(sirt::btm)(
+    judgements2 %>% data.frame,
+    maxit = 400,
+    fix.eta = 0,
+    ignore.ties = TRUE
+  )$result
+  
+  # Combine the estimates from each group in a single table
+  merged_effects <- merge(btm1$effects, btm2$effects, by = "individual")
+  
+  # Report the correlation between the two groups
+  return(cor(merged_effects$theta.x,
+             merged_effects$theta.y,
+             method = "pearson"))
+}
+
+# now use the function to compute SHR:
+set.seed(10108)
+split_halves <- withsolution_combined %>% 
+  nest(.by = judge_group) %>% 
+  mutate(
+    split_half_irr = purrr::map(
+      data,
+      \(x) replicate(n = 100, compute_split_half_irr(x))
+    )
+  ) %>% 
+  unnest(split_half_irr)
+shr_values <- split_halves %>% 
+  summarise(SHR = median(split_half_irr), .by = judge_group)
+
+# --- 合并 SSR 和 SHR 到同一张表 ---
+summary_table <- left_join(ssr_values, shr_values, by = "judge_group")
+kable(summary_table)
 
 
