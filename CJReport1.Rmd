@@ -277,18 +277,22 @@ rigour_scores %>%
 
 # Actual vs (Experts/Student)
 
-```{r Actual data, message=FALSE}
-# 读取数据
+To assess actual question difficulty, we used performance data from the 2020–21 Mathematics Diagnostic Test administered at the University of Edinburgh. The test, delivered online via an e-assessment platform, covered core high school mathematics topics including algebra, trigonometry, and calculus. Students completed the assessment in a single 90-minute sitting. Although participation was optional, it was encouraged for all incoming undergraduates, and only complete and valid attempts were included in the analysis.
+
+Mean scores for each of the 20 questions were calculated to reflect actual difficulty. Lower average scores indicate that fewer students answered the question correctly, and thus reflect greater difficulty. These scores represent observed student performance and serve as a baseline for comparison. We then compared these rankings to those derived from Bradley-Terry models of expert and student judgements to assess how well their perceived difficulty aligned with actual difficulty.
+
+```{r Actual data, message=FALSE, echo=FALSE}
+# Read the data
 Actual_grade <- read_csv("ANON_2020-21diagtestSep.csv", na = c("", "NA", "-"))
 
-# 只选择题目列
+# Select only the question columns
 grade_questions <- Actual_grade %>% select(6:25)
 
-# 强制转换为 numeric（排除 "-"）
+# Force conversion to numeric (exclude "-" entries)
 grade_questions <- grade_questions %>%
   mutate(across(everything(), ~ as.numeric(.)))
 
-# 计算总分、作答人数、平均分
+# Calculate total score, number of responses, mean, and standard deviation for each question
 average_scores <- grade_questions %>%
   summarise(across(
     everything(),
@@ -303,29 +307,28 @@ average_scores <- grade_questions %>%
   pivot_longer(cols = everything(),
                names_to = c("Question", ".value"),
                names_sep = "_")
-# 增加标准误差列
+
+# Add standard error of the mean (SEM) column
 average_scores <- average_scores %>%
   mutate(Question = str_extract(Question, "\\d+")) %>%
   mutate(sem = sd / sqrt(count))
 
-# 查看结果
-#print(average_scores)
+# View results
+# print(average_scores)
 ```
 
-
-```{r Actual Visualisation, message=FALSE}
-# 合并平均得分与 expert theta + 标准误
+```{r Actual Visualisation, message=FALSE, echo = FALSE}
+# Merge average scores with expert theta + standard error
 expert_vs_actual <- btm_estimates_expert_all %>%
   mutate(Question = paste0(individual)) %>%
   left_join(average_scores %>% mutate(Question = str_extract(Question, "\\d+")), by = "Question")
 
+# Merge average scores with student theta + standard error
 student_vs_actual <- btm_estimates_student_all %>%
   mutate(Question = paste0(individual)) %>%
   left_join(average_scores %>% mutate(Question = str_extract(Question, "\\d+")), by = "Question")
 
-
-
-# Expert 图对象
+# Expert plot object
 plot_expert <- expert_vs_actual %>%
   ggplot(aes(x = average, y = expert_theta)) +
   geom_point(size = 2) +
@@ -334,11 +337,12 @@ plot_expert <- expert_vs_actual %>%
   geom_errorbarh(aes(xmin = average - sem, xmax = average + sem), height = 0.05) +
   geom_smooth(method = "lm", se = FALSE, color = "blue") +
   ggpubr::stat_cor(method = "pearson") +
-  labs(title = "Expert Theta vs Actual Grade",
-       x = "Actual Average Grade",
-       y = "Expert Perceived Quality (θ)")
+  labs(title = "Expert-Perceived Difficulty vs Actual Grade",
+    x = "Average Score (Actual Performance)",
+    y = "Expert-Estimated Difficulty (θ)") + 
+  theme_minimal()
 
-# Student 图对象
+# Student plot object
 plot_student <- student_vs_actual %>%
   ggplot(aes(x = average, y = student_theta)) +
   geom_point(size = 2) +
@@ -347,14 +351,21 @@ plot_student <- student_vs_actual %>%
   geom_errorbarh(aes(xmin = average - sem, xmax = average + sem), height = 0.05) +
   geom_smooth(method = "lm", se = FALSE, color = "darkgreen") +
   ggpubr::stat_cor(method = "pearson") +
-  labs(title = "Student Theta vs Actual Grade",
-       x = "Actual Average Grade",
-       y = "Student Perceived Quality (θ)")
+  labs(title = "Student-Perceived Difficulty vs Actual Grade",
+    x = "Average Score (Actual Performance)",
+    y = "Student-Estimated Difficulty (θ)") +
+  theme_minimal()
 
-plot(plot_expert/plot_student)
-
-
+# Display the two plots stacked vertically
+plot(plot_expert / plot_student)
 ```
+
+To evaluate alignment between perceived and actual difficulty, we correlated each group’s estimated difficulty scores (θ) with the average performance scores across questions. The resulting visualizations reveal a clear negative relationship in both cases: questions perceived as more difficult (higher θ) tend to have lower average performance scores, indicating greater actual difficulty.
+
+For the expert group, this relationship was strong (r = –0.71, p < 0.001), indicating that expert judgments closely mirrored student performance. The student group also exhibited a moderate but statistically significant negative correlation (r = –0.54, p = 0.014), suggesting that students were reasonably able to identify which questions were more challenging, albeit with greater variability.
+
+Together, these findings suggest that both experts and students possess a meaningful understanding of relative item difficulty, with experts showing a closer alignment with actual student performance. This supports the value of expert judgments in test design and question calibration, while also demonstrating that students—despite their limited experience—can make reasonably accurate comparative evaluations of question difficulty. The stronger alignment observed among experts may reflect their greater subject knowledge and pedagogical experience. While overall patterns were consistent, certain items deviated from expectations—for example, question 10 was perceived as difficult but performed well, whereas question 14 was underestimated by students. These exceptions highlight the importance of combining statistical models with expert insight when interpreting item performance. Besides, the analysis is based on a relatively small set of 20 questions, so results should be interpreted with caution and viewed as indicative rather than definitive.
+
 
 # With vs Without Solution
 
