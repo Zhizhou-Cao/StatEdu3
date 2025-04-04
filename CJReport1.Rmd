@@ -1,8 +1,11 @@
 ---
-title: "CJReport1"
-author: "Zhizhou Cao"
+title: 'Perception of Mathematical Question Difficulty: A Comparison Between Students
+  and Experts'
+author: "Zhizhou Cao, Rachel Wang, Yanxin Ruan, Lyuyin Yang"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  html_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -18,34 +21,45 @@ library(knitr)
 library(patchwork)
 ```
 
+For code reproduction, please see: https://github.com/Zhizhou-Cao/StatEdu3 .
+
 # Introduction
 
 This project explores how well students and experts perceive the difficulty of mathematics questions, and how their subjective judgements align with actual student performance. This project utilises data from an undergraduate study in which 31 mathematical lectures (experts) and 83 first-year engineering students (students) were asked to compare pairs of mathematical diagnostic test questions. They were subsequently asked to determine which questions would likely be more difficult for incoming university students, where some groups saw questions with accompanying model solutions, whilst others did not.
 
 In order to quantify the perceived difficulty, the Bradley-Terry model is applied to transforms pairwise comparisons into a continuous difficulty scale, which enabling us to investigate the following aspects:
+
 1. To what extent does experts and students agree on the relative difficulty of questions?
+
 2. How consistent does each group rank question difficulty?
+
 3. How well does the perceived difficulty from both group align with actual difficulty?
 
 To investigate these aspects, we conducted several additional analyses. The Pearson Correlation was used to assess the strength of association between expert and student judgements, and between perceived and actual difficulty. We further computed the sum of squared residuals (SSR) to investigate how well perceived difficulty predicts observed performance. Finally we used split-half reliability (SHR) to evaluate the internal consistency of each group’s judgements.
 
-In additional to the overall analysis, we compared even-numbered and odd-numbered questions to test the robustness of our findings. Through this investigation, we aim to better understand how accurately students and experts can anticipate mathematical challenge, and explore the broader implications for diagnostic assessment design in higher education settings.
+In addition to the overall analysis, we compared even-numbered and odd-numbered questions to test the robustness of our findings. Through this investigation, we aim to better understand how accurately students and experts can anticipate mathematical challenge, and explore the broader implications for diagnostic assessment design in higher education settings.
 
 
 
 # Data 
 
-This project utilises two datasets: (1) comparative judgement data from university students and mathematical lecturers, and (2) performance data from a diagnostic mathematics. Test taken by incoming first-year engineering students at the University of Edinburgh in 2020. The judgement data consists of nine separate datasets. The expert group consists of mathematics lecturers and PhD students whilst the student groups consists of students in a first-year engineering mathematics course. In all cases, participants were presented with pairs of questions from the diagnostic test and was asked to indicate which of the two they believed would be more difficult for Year 1 students. These pairwise judgements were then used to infer an underlying difficulty ranking for the 20 test questions.
+This project utilises two datasets: 
 
-To explore the effects of question subset size on reliability, some groups were only shown either the odd-numbered or even-numbered questions, with pairings draw exclusively from within that subset. This was to investigate the hypothesis that restricting judges to fewer items might reduce cognitive load and improve the consistency of their comparisons. Furthermore, other groups such as students-withoutsolutions, were shown the test questions without model solutions, whereas all other groups had access to all model solutions during the task. Judges typically made 20 comparisons each, with the exception of the students-withsolutions2 group, where each judge made 40 comparisons. All datasets include between 10 and 83 judges, and comparisons span either 10 or 20 items depending on the condition.
+-(1) Comparative judgement data from university students and mathematical lecturers.
+
+-(2) Performance data from a diagnostic mathematics test taken by incoming first-year engineering students at the University of Edinburgh in 2020.
+
+The judgement data consists of **nine** separate datasets. The expert group consists of mathematics lecturers and PhD students whilst the student groups consists of students in a first-year engineering mathematics course. In all cases, participants were presented with pairs of questions from the diagnostic test and was asked to indicate which of the two they believed would be more difficult for Year 1 students. These pairwise judgements were then used to infer an underlying difficulty ranking for the 20 test questions.
+
+To explore the effects of question subset size on reliability, some groups were only shown either the odd-numbered or even-numbered questions, with pairings draw exclusively from within that subset. This was to investigate the hypothesis that restricting judges to fewer items might reduce cognitive load and improve the consistency of their comparisons. Furthermore, other groups such as `students_withoutsolutions`, were shown the test questions without model solutions, whereas all other groups had access to all model solutions during the task. Judges typically made 20 comparisons each, with the exception of the group contained in the dataset `students_withsolutions2`, where each judge made 40 comparisons. All datasets include between 10 and 83 judges, and comparisons span either 10 or 20 items depending on the condition.
 
 
 
-# Table of Values
+# Expert vs Student (withsolution/even/odd)
 
 To assess whether the judgements across different datasets were reliable and robust, we examined two key metrics. The Sum of Squared Residuals (SSR) was used to investigate how well the latent difficulty rankings predict actual performance, and the Split-Half Reliability (SHR) was utilised as an indication of the internal consistency of the comparative judgements within each group.
 
-```{r import dataset, message=FALSE}
+```{r import dataset, message=FALSE, echo=FALSE}
 #'# ----Import dataset----
 Actual_grade <- read_csv("ANON_2020-21diagtestSep.csv")
 
@@ -64,16 +78,15 @@ students_withsolutions2 <- read_csv("students-withsolutions2.csv") # 10 judges, 
 
 ```
 
-Following recommendations by Kinnear et al. (2025), a threshold of SSR >= 0.8 is considered a benchmark for acceptable reliability. In our analysis, the SSR values ranged from 0.813 (Student WithSolution) to 0.896 (Student Even), which indicates strong reliability across all conditions. This implies that both students and experts were reasonably good at identifying which questions would be more or less difficult for incoming students. Notably, expert groups consistently produced slightly higher SSR scores compared to student with the exception of the Even questions, where students achieved the highest SSR score of 0.896. This may reflect the cognitive benefit of judging a smaller and more focused question set. Furthermore, we noticed high SSR values for the WithSolution dataset with - for experts and - for students, which suggests that having access to worked solutions may have supported a more accurate difficulty estimation.
+Following recommendations by Kinnear et al. (2025), a threshold of \(SSR \geq 0.8\) is considered a benchmark for acceptable reliability. In our analysis, the SSR values ranged from 0.813 (`students_withsolutions`) to 0.896 (`students_even`), which indicates strong reliability across all conditions. This implies that both students and experts were reasonably good at identifying which questions would be more or less difficult for incoming students. Notably, expert groups consistently produced slightly higher SSR scores compared to student with the exception of the Even questions, where students achieved the highest SSR score of 0.896. This may reflect the cognitive benefit of judging a smaller and more focused question set. Furthermore, we noticed high SSR values for the WithSolution dataset for experts and for students, which suggests that having access to worked solutions may have supported a more accurate difficulty estimation.
 
 The SHR was further computed across the dataset, with values generally higher for experts compared to students, which indicates that experts tend to be more consistent in their judgements. The Even subset stood out once more as it showed the highest SHR values for both experts and students which further supports the idea that restricting item sets can enhance reliability when the overall number of comparisons remain sufficient. The lowest SHR was observed for the student Odd group of a value of 0.526, which falls below the commonly accepted 0.6 threshold, highlighting some variability in internal consistency, though it does not undermine the overall integrity of the scores. 
 
-Overall, these reliability metrics support the robustness of our findings and confirms that the comparative judgement tasks generated consistent scores across different judgement groups and item sets, providing reassurance that our use of CJ provides a valid and reliable method for inferring perceived difficulty in mathematical diagnostic assessments.
 
 
 
-# Expert vs Student
-```{r ExpertvsStudent}
+
+```{r ExpertvsStudent, echo=FALSE}
 # WithSolution
 # Expert model
 sirt_messages <- capture.output(btm_results_expert_all <- sirt::btm(
@@ -161,8 +174,8 @@ btm_estimates_student_odd <- btm_results_student_odd$effects %>%
 ```
 
 
-
-```{r SSR/SHR table}
+# Table of SSR and SHR Values
+```{r SSR/SHR table, echo=FALSE}
 # SSR
 ssr_table <- tibble(
   Dataset = c("WithSolution", "Even", "Odd"),
@@ -196,7 +209,7 @@ compute_split_half_irr <- function(decisions_data) {
   return(cor(merged$theta.x, merged$theta.y, method = "pearson"))
 }
 
-# 定义每组数据集
+# deine dataset
 sh_data_list <- list(
   WithSolution_Expert = experts_withsolutions,
   WithSolution_Student = students_withsolutions,
@@ -206,7 +219,7 @@ sh_data_list <- list(
   Odd_Student = student_odd
 )
 
-# 多次 split-half 重复估计
+# SHR
 set.seed(10108)
 shr_results <- map_df(names(sh_data_list), function(name) {
   data <- sh_data_list[[name]]
@@ -217,35 +230,49 @@ shr_results <- map_df(names(sh_data_list), function(name) {
 shr_results_split <- shr_results %>%
   separate(Group, into = c("Dataset", "Group"), sep = "_")
 
-# 同样，把 SSR 表整理为长格式
+# SSR
 ssr_long <- ssr_table %>%
   pivot_longer(cols = c(Expert_SSR, Student_SSR),
                names_to = "Group",
                names_pattern = "(.*)_SSR",
                values_to = "SSR")
 
-# 合并两个表
+# Combine table
 reliability_table <- left_join(ssr_long, shr_results_split, by = c("Dataset", "Group")) %>%
   select(Dataset, Group, SSR, SHR)
 
 kable(reliability_table)
 ```
 
-```{r correlation}
+# Table of Correlation Values
+We computed the pearson correlation values between three data sets and found little differences, they are all significant as shown below. 
+```{r correlation, echo=FALSE}
 comparison_all <- left_join(btm_estimates_student_all, btm_estimates_expert_all, by = "individual")
 comparison_even <- left_join(btm_estimates_student_even, btm_estimates_expert_even, by = "individual")
 comparison_odd <- left_join(btm_estimates_student_odd, btm_estimates_expert_odd, by = "individual")
 
-cat("\n=== Correlation Summary ===\n")
-list(
-  WithSolution = correlation::correlation(comparison_all %>% select(expert_theta, student_theta), method = "pearson"),
-  Even = correlation::correlation(comparison_even %>% select(expert_theta, student_theta), method = "pearson"),
-  Odd = correlation::correlation(comparison_odd %>% select(expert_theta, student_theta), method = "pearson")
-)
+# Correlation 
+cor_withsolution <- correlation(comparison_all %>% select(expert_theta, student_theta), method = "pearson") %>%
+  mutate(Group = "WithSolution")
+cor_even <- correlation(comparison_even %>% select(expert_theta, student_theta), method = "pearson") %>%
+  mutate(Group = "Even")
+cor_odd <- correlation(comparison_odd %>% select(expert_theta, student_theta), method = "pearson") %>%
+  mutate(Group = "Odd")
+
+# Combine
+combined_result <- bind_rows(cor_withsolution, cor_even, cor_odd)
+
+# tidy 
+combined_result <- combined_result %>% 
+  select(Group, Parameter1, Parameter2, r, CI_low, CI_high, t, df_error, p)
+
+# print
+kable(combined_result)
 
 ```
 
-```{r expert vs student plot}
+We also visualised the relationship between experts and students, with error bar displayed. There exists a positive relationship.
+```{r expert vs student plot, echo=FALSE, message=FALSE}
 # Merge & Plot
 
 
@@ -258,18 +285,19 @@ comparison_all %>%
   geom_smooth(method = "lm", se = FALSE, color = "gray") +
   ggpubr::stat_cor() +
   labs(title = "With Solution: Expert vs Student",
-       x = "Expert Theta", y = "Student Theta")
+       x = "Expert Theta", y = "Student Theta")+
+  theme_minimal()
 
 
 ```
 
-
-```{r Raw visual}
-# 给 expert_data 添加 judge_group = "expert"
+We also compared the Bradley-Terry model with the raw scores for expert vs student with full solutions, and again noticed little differences. 
+```{r Raw visual, echo=FALSE, eval=FALSE}
+# expert_data add judge_group = "expert"
 experts_withsolutions<- experts_withsolutions %>%
   mutate(judge_group = "expert")
 
-# 给 student_data 添加 judge_group = "student"
+# student_data add judge_group = "student"
 students_withsolutions <- students_withsolutions %>%
   mutate(judge_group = "student")
 
@@ -304,12 +332,14 @@ rigour_scores %>%
   geom_point(size = 2) +
   geom_text(aes(label = id), vjust = 1, hjust = 0, nudge_x = 0.01, nudge_y = -0.01, color = "black") +
   ggpubr::stat_cor() +
-  facet_wrap(~ method, scales = "free")
+  facet_wrap(~ method, scales = "free")+
+  theme_minimal()
 
 ```
+Overall, these reliability metrics support the robustness of our findings and confirms that the comparative judgement tasks generated consistent scores across different judgement groups and item sets, providing reassurance that our use of CJ provides a valid and reliable method for inferring perceived difficulty in mathematical diagnostic assessments.
 
 
-# Actual vs (Experts/Student)
+# Actual vs (Expert and Student)
 
 To assess actual question difficulty, we used performance data from the 2020–21 Mathematics Diagnostic Test administered at the University of Edinburgh. The test, delivered online via an e-assessment platform, covered core high school mathematics topics including algebra, trigonometry, and calculus. Students completed the assessment in a single 90-minute sitting. Although participation was optional, it was encouraged for all incoming undergraduates, and only complete and valid attempts were included in the analysis.
 
@@ -394,25 +424,25 @@ plot_student <- student_vs_actual %>%
 plot(plot_expert / plot_student)
 ```
 
-To evaluate alignment between perceived and actual difficulty, we correlated each group’s estimated difficulty scores (θ) with the average performance scores across questions. The resulting visualizations reveal a clear negative relationship in both cases: questions perceived as more difficult (higher θ) tend to have lower average performance scores, indicating greater actual difficulty.
+To evaluate alignment between perceived and actual difficulty, we correlated each group’s estimated difficulty scores (\(\theta\)) with the average performance scores across questions. The visualisation results reveal a clear negative relationship in both cases: questions perceived as more difficult (higher \(\theta\)) tend to have lower average performance scores, indicating greater actual difficulty.
 
-For the expert group, this relationship was strong (r = –0.71, p < 0.001), indicating that expert judgments closely mirrored student performance. The student group also exhibited a moderate but statistically significant negative correlation (r = –0.54, p = 0.014), suggesting that students were reasonably able to identify which questions were more challenging, albeit with greater variability.
+For the expert group, this relationship was strong (\(r = –0.71, p < 0.001\)), indicating that expert judgments closely mirrored student performance. The student group also exhibited a moderate but statistically significant negative correlation (\(r = –0.54, p = 0.014\)), suggesting that students were reasonably able to identify which questions were more challenging, albeit with greater variability.
 
-Together, these findings suggest that both experts and students possess a meaningful understanding of relative item difficulty, with experts showing a closer alignment with actual student performance. This supports the value of expert judgments in test design and question calibration, while also demonstrating that students—despite their limited experience—can make reasonably accurate comparative evaluations of question difficulty. The stronger alignment observed among experts may reflect their greater subject knowledge and pedagogical experience. While overall patterns were consistent, certain items deviated from expectations—for example, question 10 was perceived as difficult but performed well, whereas question 14 was underestimated by students. These exceptions highlight the importance of combining statistical models with expert insight when interpreting item performance. Besides, the analysis is based on a relatively small set of 20 questions, so results should be interpreted with caution and viewed as indicative rather than definitive.
+These findings suggest that both experts and students have a good understanding of question difficulty, with experts showing a closer alignment with actual student performance, due to experience. While overall patterns were consistent, certain items deviated from expectations. For example, question 10 was perceived as difficult but performed well, whereas question 14 was underestimated by students. Therefore, the difference between individual questions should be considered as a factor for further analysis. 
 
 
-# Student Comparisons: With vs Without Solutions, and More Judges vs. More Judgments
+# Comparison Within Student Datasets:
 
 While the primary aim of this project is to investigate how well students and experts can judge the difficulty of mathematical questions, it is also important to explore what factors influence the quality and reliability of student judgements. To that end, we conducted two supplementary analyses comparing different groups of students under other conditions: 
 
 To evaluate whether access to model solutions affected students’ perception of item difficulty, we compared two groups of students—those with and without access to solutions. In addition, the comparison between the “with_solution” and “with_solution2” groups, who both completed an equal number of comparisons (400), allowed us to assess the reliability and stability of students’ judgements under controlled conditions.
 
 
-## With vs Without Solution
+## Students: Comparing With vs Without Solution
 
-To compare the perceived difficulty rankings between students who had access to model solutions and those who did not, we examined their Bradley-Terry (BT) theta estimates across all 20 items. 
+To compare the perceived difficulty rankings between students who had access to model solutions and those who did not, we examined their Bradley-Terry (BT) \(\theta\) estimates across all 20 items. 
 
-We first examine their Pearson correlation table shown below. The resulting estimates showed a strong and significant correlation between the two groups, with r = 0.83, 95% CI = [0.60, 0.93], p<0.001. This suggests that students’ overall rankings of question difficulty were largely consistent regardless of whether model solutions were available.
+We first examined their Pearson correlation table shown below. The resulting estimates showed a strong and significant correlation between the two groups, with r = 0.83, 95% CI = [0.60, 0.93], p<0.001. This suggests that students’ overall rankings of question difficulty were largely consistent regardless of whether model solutions were available.
 
 ```{r With-without data, echo=FALSE}
 
@@ -555,7 +585,7 @@ reliability_student_solution <- left_join(
 kable(reliability_student_solution)
 ```
 
-The graph below displays the perceived difficulty rankings for each question under both conditions. The with-solution group exhibits a smooth, ordered progression of theta values across items, indicating a high consistency. In contrast, the without-solution group shows more irregular pattern and a less monotonic structure, suggesting greater variability or uncertainty in their difficulty judgements. The two groups appears to have similar upwards trend. 
+The graph below displays the perceived difficulty rankings for each question under both conditions. Due to reordering the questions by \(\theta\) values, the with-solution group exhibits a smooth pattern. In contrast, the without-solution group shows a more irregular pattern and a less monotonic structure, suggesting greater variability or uncertainty in their difficulty judgements. Despite the pattern variance, the two groups have similar upward trends. 
 
 ```{r with-without plot, echo=FALSE}
 btm_results_students <- student_combined %>%
@@ -592,15 +622,16 @@ theta_scores_students %>%
   geom_point() +
   facet_grid(cols = vars(judge_group)) +
   labs(title = "Perceived Difficulty by Students (With vs Without Solution)",
-       x = "Theta", y = "Proof")
+       x = "Theta", y = "Proof")+
+  theme_minimal()
 ```
 
-We compared the difficulty rankings between students who completed the task with and without model solutions. The Pearson correlation between the two groups' theta estimates was high, indicating strong agreement in overall rankings. Reliability table were also similar. These results suggest that access to solutions had minimal impact on both the accuracy and consistency of student judgements. However, visual inspection of item-level theta distributions showed smoother and more clearly separated scores in the with-solution group, which may indicate more confident or consistent decisions when solutions were available.
+To summarise, we compared the difficulty rankings between students who completed the task with and without model solutions. The Pearson correlation between the two groups' theta estimates was high, indicating strong agreement in overall rankings. The reliability table was also similar. These results suggest that access to solutions had minimal impact on both the accuracy and consistency of student judgements. 
 
 
-## Students with solution vs Students with solution 2
+## Students: Compare with Solution vs Solution2 (more judges)
 
-To further explore how the distribution of judgment workload might affect reliability, we focused on these two groups. Both judged all 20 questions with model solutions. students-withsolutions had more judges (20) making fewer comparisons, while students-withsolutions2 had fewer judges (10) making more comparisons. Importantly, the total number of comparisons was kept approximately constant at 400.
+To further explore how the distribution of judgment workload might affect reliability, we focused on these two groups. Both judged all 20 questions with model solutions. Dataset `students_withsolutions` had more judges (20) making fewer comparisons, while dataset `students_withsolutions2` had fewer judges (10) making more comparisons. Importantly, the total number of comparisons was kept approximately the same at 400.
 
 ```{r withsol data, echo=FALSE}
 # ===============================
@@ -639,7 +670,7 @@ btm_estimates_studentswithsolution2 <- btm_results_studentswithsolution2$effects
 comparison_withsolution <- left_join(btm_estimates_studentswithsolution, btm_estimates_studentswithsolution2, by = "individual")
 ```
 
-The Pearson correlation between the two theta estimates was moderate, r = 0.64, p = 0.002, suggesting a reasonable level of agreement, although it was notably lower than the correlation observed between the with and without solution groups. This indicates some variability in difficulty rankings between the two groups.
+The Pearson correlation between the two theta estimates was moderate, r = 0.64, p = 0.002, suggesting a reasonable level of agreement. Though it was notably lower than the correlation observed between the with and without solution groups. This indicates some variability in difficulty rankings between the two groups.
 
 ```{r withsol correlation, echo=FALSE}
 # Correlation
@@ -649,9 +680,9 @@ correlation::correlation(
 )
 ```
 
-Reliability table of the two groups differed. While SSR remained relatively high in both groups (0.813 and 0.757), SHR for group "withsolutions" (0.583) is significantly higher than "withsolutions2" (0.259). This suggests that increasing the number of comparisons per student may have introduced more inconsistency, possibly due to fatigue, reduced attention, or diminishing engagement over time.
 
-```{r SSR+SHR table, echo=FALSE}
+The two groups show extremely strong positive correlations (both 0.996) between raw values and BT models coefficients, indicating minimal differences. 
+```{r correlaion table, echo=FALSE}
 # ===============================
 # SECTION 1: SSR - students_withsolutions & students_withsolutions2
 # ===============================
@@ -662,7 +693,7 @@ ssr_compare_table <- tibble(
     btm_results_studentswithsolution2$sepG^2 / (1 + btm_results_studentswithsolution2$sepG^2)
   )
 )
-print(ssr_compare_table)
+
 
 
 # ===============================
@@ -694,8 +725,6 @@ shr_compare_table <- tibble(
     median(replicate(100, compute_split_half_irr(students_withsolutions2)))
   )
 )
-print(shr_compare_table)
-
 
 # ===============================
 # SECTION 3: Raw Score vs Theta
@@ -707,8 +736,8 @@ compare_raw_vs_theta <- function(btm_result) {
 }
 
 raw_vs_theta_list <- list(
-  Student1 = btm_results_studentswithsolution,
-  Student2 = btm_results_studentswithsolution2
+  Studentswithsolution = btm_results_studentswithsolution,
+  Studentswithsolution2 = btm_results_studentswithsolution2
 )
 
 raw_vs_theta_table <- map_df(names(raw_vs_theta_list), function(name) {
@@ -723,14 +752,16 @@ raw_vs_theta_table <- map_df(names(raw_vs_theta_list), function(name) {
     p = signif(res$p, 3)
   )
 })
-print(raw_vs_theta_table)
+kable(raw_vs_theta_table)
+```
 
-
+Reliability table of the two groups differed. While SSR remained relatively high in both groups (0.813 and 0.757), SHR for group "withsolutions" (0.583) is significantly higher than "withsolutions2" (0.259). This suggests that increasing the number of comparisons per student may have introduced more inconsistency, possibly due to fatigue, reduced attention, or diminishing engagement over time.
+```{r ssr+shr, echo=FALSE}
 # ===============================
 # SECTION 4: Combine SSR + SHR
 # ===============================
 reliability_table <- left_join(ssr_compare_table, shr_compare_table, by = "Dataset")
-print(reliability_table)
+kable(reliability_table)
 ```
 
 When comparing 20 and 40 comparisons per student by visualisation, the ranking of perceived difficulty was more stable in the 20-comparison condition. The theta estimates showed a clear and consistent ordering, while in the 40-comparison condition, the ranking became more scattered and inconsistent. This aligns with the much lower SHR value (0.26), suggesting that more comparisons did not improve, and may have reduced, the reliability of student judgements.
@@ -771,14 +802,14 @@ theta_combined %>%
 
 ```
 
-In conclusion, students with access to model solutions produced moderately consistent difficulty rankings across two datasets, as reflected by a correlation of R=0.64 and SSR values above 0.75. However, the notable drop in SHR from 0.58 to 0.26 suggests reduced reliability in individual judgements when students made more comparisons. This indicates that increasing the number of comparisons may introduce inconsistency, even when solutions are provided.
+Thus, students with access to model solutions produced moderately consistent difficulty rankings across two datasets, as reflected by a correlation of R=0.64 and SSR > 0.75. However, the notable drop in SHR from 0.58 to 0.26 suggests reduced reliability in individual judgements when students made more comparisons. This indicates that increasing the number of comparisons may introduce inconsistency, even when solutions are provided.
 
 To conclude, students’ difficulty judgments were broadly consistent with or without access to model solutions, with similar SSR and SHR values. However, when the same total number of comparisons was completed by fewer students, internal consistency (SHR) dropped substantially. This suggests that while model solutions have limited impact, distributing comparisons across more students leads to more reliable judgments.
 
 
 # Limitations
 
-Although both expert and student theta scores showed statistically significant correlations with actual average grades, these were only analysed at the level of question means, which meant that were unable to conduct item-level residual analysis due to the limited number of data points with n = 20 test questions, nor fit a regression model. From Kinnear et al. (2025), more robust analyses often require a larger number of items or groups of judges to support finer-grained statistical modelling. 
+Although both expert and student theta scores showed statistically significant correlations with actual average grades, these were only analysed at the level of question means. This meant that we were unable to conduct item-level residual analysis due to the limited number of data points with n = 20 test questions, nor fit a regression model. From Kinnear et al. (2025), more robust analyses often require a larger number of items or groups of judges to support finer-grained statistical modelling. 
 
 Secondly, despite the fact that our use of the Bradley-Terry model provided a principled way to convert pairwise comparisons into continuous difficult estimates, it assumes unidimensionality and does not directly account for the non-linear effects or interactions such as specific content areas or the way the questions are formatted. Furthermore, due to the low sample size and risk of multicollinearity which would make model convergence unreliable, we were unable to fit a regression model to predict perceived difficulty from features such as average score, topic, and visual complexity. This constraints our ability to fully explore content validity, which is a key aspect of CJ evaluation (Jones & Davies, 2024).
 
@@ -799,3 +830,13 @@ Thirdly, we evaluated how well the perceived difficulty aligned with actual stud
 The analysis of the odd and even numbered question subsets confirmed the robustness of the results by showing that the main findings were consistent across different item groupings.  While the limited number of test items (n = 20) precluded more complex regression modelling, the convergence of results across correlation analyses, SHR and SSR provides strong evidence that experts make more consistent and accurate judgements of question difficulty than students. 
 
 Overall, this project demonstrates that comparative judgement paired with the Bradley-Terry model is a powerful and reliable method for quantifying perceived difficulty and understanding how students and experts interpret mathematical challenge.  These findings highlight the value of expert input in diagnostic assessment design and the potential to use comparative judgement as a tool for investigating metacognitive awareness among students.
+
+
+# References
+
+Jones, I., & Davies, B. (2024). Comparative judgement in education research. International Journal of Research & Method in Education, 47(2), 170181. https://doi.org/10.1080/1743727X.2023.2242273
+
+Kinnear, G., Jones, I., & Davies, B. (2025). Comparative judgement as a research tool: A meta-analysis of application and reliability. https://doi.org/10.31219/osf.io/c9q3b_v1
+
+Verhavert, S., De Maeyer, S., Donche, V., & Coertjens, L. (2018). Scale separation reliability: What does it mean in the context of comparative judgment? Applied Psychological Measurement, 42(6), 428–445. https://doi.org/10.1177/0146621617748321
+
