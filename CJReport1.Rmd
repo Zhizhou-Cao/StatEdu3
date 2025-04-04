@@ -18,6 +18,32 @@ library(knitr)
 library(patchwork)
 ```
 
+# Introduction
+
+This project explores how well students and experts perceive the difficulty of mathematics questions, and how their subjective judgements align with actual student performance. This project utilises data from an undergraduate study in which 31 mathematical lectures (experts) and 83 first-year engineering students (students) were asked to compare pairs of mathematical diagnostic test questions. They were subsequently asked to determine which questions would likely be more difficult for incoming university students, where some groups saw questions with accompanying model solutions, whilst others did not.
+
+In order to quantify the perceived difficulty, the Bradley-Terry model is applied to transforms pairwise comparisons into a continuous difficulty scale, which enabling us to investigate the following aspects:
+1. To what extent does experts and students agree on the relative difficulty of questions?
+2. How consistent does each group rank question difficulty?
+3. How well does the perceived difficulty from both group align with actual difficulty?
+
+To investigate these aspects, we conducted several additional analyses. The Pearson Correlation was used to assess the strength of association between expert and student judgements, and between perceived and actual difficulty. We further computed the sum of squared residuals (SSR) to investigate how well perceived difficulty predicts observed performance. Finally we used split-half reliability (SHR) to evaluate the internal consistency of each group’s judgements.
+
+In additional to the overall analysis, we compared even-numbered and odd-numbered questions to test the robustness of our findings. Through this investigation, we aim to better understand how accurately students and experts can anticipate mathematical challenge, and explore the broader implications for diagnostic assessment design in higher education settings.
+
+
+
+# Data 
+
+This project utilises two datasets: (1) comparative judgement data from university students and mathematical lecturers, and (2) performance data from a diagnostic mathematics. Test taken by incoming first-year engineering students at the University of Edinburgh in 2020. The judgement data consists of nine separate datasets. The expert group consists of mathematics lecturers and PhD students whilst the student groups consists of students in a first-year engineering mathematics course. In all cases, participants were presented with pairs of questions from the diagnostic test and was asked to indicate which of the two they believed would be more difficult for Year 1 students. These pairwise judgements were then used to infer an underlying difficulty ranking for the 20 test questions.
+
+To explore the effects of question subset size on reliability, some groups were only shown either the odd-numbered or even-numbered questions, with pairings draw exclusively from within that subset. This was to investigate the hypothesis that restricting judges to fewer items might reduce cognitive load and improve the consistency of their comparisons. Furthermore, other groups such as students-withoutsolutions, were shown the test questions without model solutions, whereas all other groups had access to all model solutions during the task. Judges typically made 20 comparisons each, with the exception of the students-withsolutions2 group, where each judge made 40 comparisons. All datasets include between 10 and 83 judges, and comparisons span either 10 or 20 items depending on the condition.
+
+
+
+# Table of Values
+
+To assess whether the judgements across different datasets were reliable and robust, we examined two key metrics. The Sum of Squared Residuals (SSR) was used to investigate how well the latent difficulty rankings predict actual performance, and the Split-Half Reliability (SHR) was utilised as an indication of the internal consistency of the comparative judgements within each group.
 
 ```{r import dataset, message=FALSE}
 #'# ----Import dataset----
@@ -37,6 +63,14 @@ students_withsolutions1 <- read_csv("students-withsolutions1.csv") # 10 judges, 
 students_withsolutions2 <- read_csv("students-withsolutions2.csv") # 10 judges, 40 comparisons
 
 ```
+
+Following recommendations by Kinnear et al. (2025), a threshold of SSR >= 0.8 is considered a benchmark for acceptable reliability. In our analysis, the SSR values ranged from 0.813 (Student WithSolution) to 0.896 (Student Even), which indicates strong reliability across all conditions. This implies that both students and experts were reasonably good at identifying which questions would be more or less difficult for incoming students. Notably, expert groups consistently produced slightly higher SSR scores compared to student with the exception of the Even questions, where students achieved the highest SSR score of 0.896. This may reflect the cognitive benefit of judging a smaller and more focused question set. Furthermore, we noticed high SSR values for the WithSolution dataset with - for experts and - for students, which suggests that having access to worked solutions may have supported a more accurate difficulty estimation.
+
+The SHR was further computed across the dataset, with values generally higher for experts compared to students, which indicates that experts tend to be more consistent in their judgements. The Even subset stood out once more as it showed the highest SHR values for both experts and students which further supports the idea that restricting item sets can enhance reliability when the overall number of comparisons remain sufficient. The lowest SHR was observed for the student Odd group of a value of 0.526, which falls below the commonly accepted 0.6 threshold, highlighting some variability in internal consistency, though it does not undermine the overall integrity of the scores. 
+
+Overall, these reliability metrics support the robustness of our findings and confirms that the comparative judgement tasks generated consistent scores across different judgement groups and item sets, providing reassurance that our use of CJ provides a valid and reliable method for inferring perceived difficulty in mathematical diagnostic assessments.
+
+
 
 # Expert vs Student
 ```{r ExpertvsStudent}
@@ -740,3 +774,28 @@ theta_combined %>%
 In conclusion, students with access to model solutions produced moderately consistent difficulty rankings across two datasets, as reflected by a correlation of R=0.64 and SSR values above 0.75. However, the notable drop in SHR from 0.58 to 0.26 suggests reduced reliability in individual judgements when students made more comparisons. This indicates that increasing the number of comparisons may introduce inconsistency, even when solutions are provided.
 
 To conclude, students’ difficulty judgments were broadly consistent with or without access to model solutions, with similar SSR and SHR values. However, when the same total number of comparisons was completed by fewer students, internal consistency (SHR) dropped substantially. This suggests that while model solutions have limited impact, distributing comparisons across more students leads to more reliable judgments.
+
+
+# Limitations
+
+Although both expert and student theta scores showed statistically significant correlations with actual average grades, these were only analysed at the level of question means, which meant that were unable to conduct item-level residual analysis due to the limited number of data points with n = 20 test questions, nor fit a regression model. From Kinnear et al. (2025), more robust analyses often require a larger number of items or groups of judges to support finer-grained statistical modelling. 
+
+Secondly, despite the fact that our use of the Bradley-Terry model provided a principled way to convert pairwise comparisons into continuous difficult estimates, it assumes unidimensionality and does not directly account for the non-linear effects or interactions such as specific content areas or the way the questions are formatted. Furthermore, due to the low sample size and risk of multicollinearity which would make model convergence unreliable, we were unable to fit a regression model to predict perceived difficulty from features such as average score, topic, and visual complexity. This constraints our ability to fully explore content validity, which is a key aspect of CJ evaluation (Jones & Davies, 2024).
+
+Finally, while we report correlations and reliability estimates, we were unable to compute the true inter-rater reliability (IRR) due to the absence of an independent replication group. Instead, we used split-half reliability (SHR) as a proxy, which is known to systematically underestimate IRR (Verhavert et al., 2018). Several student groups showed SHR values below the commonly used 0.7 threshold, which suggests that there is some variability and reduced internal consistency in their difficulty rankings. This indicates that while student judgements are broadly informative, they may be less stable across repeated samples compared to expert judgements.
+
+
+
+# Conclusion
+
+This project aimed to investigate how well experts and students can perceive the difficulty of mathematics questions and how these perceptions relate to actual student performance. By applying the Bradley-Terry model to comparative judgment data from both groups, we were able to quantify difficulty on a continuous scale and address the three key research questions mentioned.
+
+Firstly, we examined to the extent of which the experts and students agreed in their rankings of question difficulty. We observed moderate but statistically significant agreement between student and expert difficulty rankings with a correlation of r = 0.63 with model solutions, which suggests partial shared understanding. However, differences in judgement likely reflect variations in experience, pedagogical insight, and confidence.
+
+Secondly, we assessed the internal consistency of each group’s judgement by using SHR. We noticed that expert groups produced more internally consistent rankings which was shown by their higher SHR values across most datasets.  Student SHR values varied more widely, with some groups falling below accepted reliability thresholds. This reinforces findings from the literature that expert judgements are typically more stable and coherent.
+
+Thirdly, we evaluated how well the perceived difficulty aligned with actual student performance by examining the Pearson correlation. We noticed that expert-perceived difficulty showed a stronger inverse correlation of r = -0.71 with average question scores compared to student judgements with an inverse correlation of r = -0.54, which indicates that experts were able to better anticipate which questions student found the most challenging. This was further supported by the SSR values, which were generally higher for expert groups across all conditions, which suggests that their rankings was the most predictive of observed difficulty. 
+
+The analysis of the odd and even numbered question subsets confirmed the robustness of the results by showing that the main findings were consistent across different item groupings.  While the limited number of test items (n = 20) precluded more complex regression modelling, the convergence of results across correlation analyses, SHR and SSR provides strong evidence that experts make more consistent and accurate judgements of question difficulty than students. 
+
+Overall, this project demonstrates that comparative judgement paired with the Bradley-Terry model is a powerful and reliable method for quantifying perceived difficulty and understanding how students and experts interpret mathematical challenge.  These findings highlight the value of expert input in diagnostic assessment design and the potential to use comparative judgement as a tool for investigating metacognitive awareness among students.
