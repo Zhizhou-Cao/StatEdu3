@@ -58,7 +58,7 @@ comparison_withsolution %>%
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
   ggpubr::stat_cor(method = "pearson") +
   labs(
-    title = "Student vs Student (With Solutions)",
+    title = "Students 20 Comparison vs 40 Comparison (With Solutions)",
     subtitle = "Comparison of BTM Theta estimates from two datasets",
     x = "Student Theta (Dataset 1)",
     y = "Student Theta (Dataset 2)"
@@ -71,85 +71,41 @@ correlation::correlation(
   method = "pearson"
 )
 
-# ===============================
-# SECTION 1: SSR - students_withsolutions & students_withsolutions2
-# ===============================
-ssr_compare_table <- tibble(
-  Dataset = c("students_withsolutions", "students_withsolutions2"),
-  SSR = c(
-    btm_results_studentswithsolution$sepG^2 / (1 + btm_results_studentswithsolution$sepG^2),
-    btm_results_studentswithsolution2$sepG^2 / (1 + btm_results_studentswithsolution2$sepG^2)
-  )
-)
-print(ssr_compare_table)
 
+# Another visualization plot
+# Add group label to each set of theta estimates
+theta_withsol_long <- btm_estimates_studentswithsolution %>%
+  mutate(judge_group = "20 comparisons") %>%
+  rename(theta = theta_withsol, se = se_withsol)
 
-# ===============================
-# SECTION 2: SHR - students_withsolutions & students_withsolutions2
-# ===============================
-compute_split_half_irr <- function(decisions_data) {
-  decisions <- decisions_data %>%
-    mutate(winning_column = 1) %>%
-    select(candidate_chosen, candidate_not_chosen, winning_column, judge)
-  
-  judge_group1 <- decisions %>% distinct(judge) %>% slice_sample(prop = 0.5)
-  judge_group2 <- decisions %>% distinct(judge) %>% anti_join(judge_group1, by = "judge")
-  
-  judgements1 <- decisions %>% semi_join(judge_group1, by = "judge")
-  judgements2 <- decisions %>% semi_join(judge_group2, by = "judge")
-  
-  btm1 <- purrr::quietly(sirt::btm)(judgements1 %>% data.frame(), maxit = 400, fix.eta = 0)$result
-  btm2 <- purrr::quietly(sirt::btm)(judgements2 %>% data.frame(), maxit = 400, fix.eta = 0)$result
-  
-  merged <- merge(btm1$effects, btm2$effects, by = "individual")
-  return(cor(merged$theta.x, merged$theta.y, method = "pearson"))
-}
+theta_withsol2_long <- btm_estimates_studentswithsolution2 %>%
+  mutate(judge_group = "40 comparisons") %>%
+  rename(theta = theta_withsol2, se = se_withsol2)
 
-set.seed(10108)
-shr_compare_table <- tibble(
-  Dataset = c("students_withsolutions", "students_withsolutions2"),
-  SHR = c(
-    median(replicate(100, compute_split_half_irr(students_withsolutions))),
-    median(replicate(100, compute_split_half_irr(students_withsolutions2)))
-  )
-)
-print(shr_compare_table)
+# Combine into one long dataset
+theta_combined <- bind_rows(theta_withsol_long, theta_withsol2_long)
 
+# Use 20-comparison group to define theta-based ordering of individuals
+theta_order <- theta_withsol_long %>%
+  arrange(theta) %>%
+  pull(individual)
 
-# ===============================
-# SECTION 3: Raw Score vs Theta
-# ===============================
-compare_raw_vs_theta <- function(btm_result) {
-  btm_result$effects %>%
-    select(theta, propscore) %>%
-    correlation::correlation(method = "pearson", p_adjust = "none")
-}
+# Plot
+theta_combined %>%
+  mutate(
+    individual = factor(individual, levels = theta_order),
+    judge_group = factor(judge_group, levels = c("20 comparisons", "40 comparisons"))
+  ) %>%
+  ggplot(aes(x = theta, y = individual)) +
+  geom_point() +
+  facet_grid(cols = vars(judge_group)) +
+  labs(
+    title = "Perceived Difficulty by Students (20 vs 40 Comparisons)",
+    x = "Theta Estimate",
+    y = "Candidate"
+  ) +
+  theme_minimal()
 
-raw_vs_theta_list <- list(
-  Student1 = btm_results_studentswithsolution,
-  Student2 = btm_results_studentswithsolution2
-)
-
-raw_vs_theta_table <- map_df(names(raw_vs_theta_list), function(name) {
-  res <- correlation::correlation(
-    raw_vs_theta_list[[name]]$effects %>% select(theta, propscore),
-    method = "pearson", p_adjust = "none"
-  )
-  tibble(
-    Dataset = name,
-    r = round(res$r, 3),
-    CI = paste0("[", round(res$CI_low, 3), ", ", round(res$CI_high, 3), "]"),
-    p = signif(res$p, 3)
-  )
-})
-print(raw_vs_theta_table)
-
-
-# ===============================
-# SECTION 4: Combine SSR + SHR
-# ===============================
-reliability_table <- left_join(ssr_compare_table, shr_compare_table, by = "Dataset")
-print(reliability_table)
 
 
 

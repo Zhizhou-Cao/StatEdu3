@@ -367,9 +367,20 @@ For the expert group, this relationship was strong (r = –0.71, p < 0.001), ind
 Together, these findings suggest that both experts and students possess a meaningful understanding of relative item difficulty, with experts showing a closer alignment with actual student performance. This supports the value of expert judgments in test design and question calibration, while also demonstrating that students—despite their limited experience—can make reasonably accurate comparative evaluations of question difficulty. The stronger alignment observed among experts may reflect their greater subject knowledge and pedagogical experience. While overall patterns were consistent, certain items deviated from expectations—for example, question 10 was perceived as difficult but performed well, whereas question 14 was underestimated by students. These exceptions highlight the importance of combining statistical models with expert insight when interpreting item performance. Besides, the analysis is based on a relatively small set of 20 questions, so results should be interpreted with caution and viewed as indicative rather than definitive.
 
 
-# With vs Without Solution
+# Student Comparisons: With vs Without Solutions, and More Judges vs. More Judgments
 
-```{r With-without data}
+While the primary aim of this project is to investigate how well students and experts can judge the difficulty of mathematical questions, it is also important to explore what factors influence the quality and reliability of student judgements. To that end, we conducted two supplementary analyses comparing different groups of students under other conditions: 
+
+To evaluate whether access to model solutions affected students’ perception of item difficulty, we compared two groups of students—those with and without access to solutions. In addition, the comparison between the “with_solution” and “with_solution2” groups, who both completed an equal number of comparisons (400), allowed us to assess the reliability and stability of students’ judgements under controlled conditions.
+
+
+## With vs Without Solution
+
+To compare the perceived difficulty rankings between students who had access to model solutions and those who did not, we examined their Bradley-Terry (BT) theta estimates across all 20 items. 
+
+We first examine their Pearson correlation table shown below. The resulting estimates showed a strong and significant correlation between the two groups, with r = 0.83, 95% CI = [0.60, 0.93], p<0.001. This suggests that students’ overall rankings of question difficulty were largely consistent regardless of whether model solutions were available.
+
+```{r With-without data, echo=FALSE}
 
 
 # Fit BT model for WITH solution
@@ -400,16 +411,21 @@ theta_without <- btm_students_without$effects %>%
 
 ```
 
-```{r with-without correlation}
+```{r with-without correlation, echo=FALSE}
 # Merge results
 theta_compare <- left_join(theta_with, theta_without, by = "individual")
 # Correlation test
-cor.test(theta_compare$theta_with, theta_compare$theta_without)
+correlation::correlation(
+  theta_compare %>% select(theta_with, theta_without),
+  method = "pearson"
+)
 
 
 ```
 
-```{r with-without SHR-SSR}
+SSR value reflects how well the estimated difficulties align with actual student performance. Students' SSR were 0.813 (with solution) and 0.816 (without solution). Similarly, SHR values, a measure of internal consistency, were 0.583 and 0.580, respectively. These near-identical values suggest that solution access had little impact on either reliability or predictive accuracy of the rankings.
+
+```{r with-without SHR-SSR, echo=FALSE}
 students_with <- students_withsolutions %>%
   mutate(judge_group = "with_solution")
 students_without <- students_withoutsolutions %>%
@@ -505,7 +521,9 @@ reliability_student_solution <- left_join(
 kable(reliability_student_solution)
 ```
 
-```{r with-without plot}
+The graph below displays the perceived difficulty rankings for each question under both conditions. The with-solution group exhibits a smooth, ordered progression of theta values across items, indicating a high consistency. In contrast, the without-solution group shows more irregular pattern and a less monotonic structure, suggesting greater variability or uncertainty in their difficulty judgements. The two groups appears to have similar upwards trend. 
+
+```{r with-without plot, echo=FALSE}
 btm_results_students <- student_combined %>%
   nest(.by = judge_group) %>%
   mutate(
@@ -542,3 +560,183 @@ theta_scores_students %>%
   labs(title = "Perceived Difficulty by Students (With vs Without Solution)",
        x = "Theta", y = "Proof")
 ```
+
+We compared the difficulty rankings between students who completed the task with and without model solutions. The Pearson correlation between the two groups' theta estimates was high, indicating strong agreement in overall rankings. Reliability table were also similar. These results suggest that access to solutions had minimal impact on both the accuracy and consistency of student judgements. However, visual inspection of item-level theta distributions showed smoother and more clearly separated scores in the with-solution group, which may indicate more confident or consistent decisions when solutions were available.
+
+
+## Students with solution vs Students with solution 2
+
+To further explore how the distribution of judgment workload might affect reliability, we focused on these two groups. Both judged all 20 questions with model solutions. students-withsolutions had more judges (20) making fewer comparisons, while students-withsolutions2 had fewer judges (10) making more comparisons. Importantly, the total number of comparisons was kept approximately constant at 400.
+
+```{r withsol data, echo=FALSE}
+# ===============================
+# Fit BTM model for students_withsolutions
+# ===============================
+sirt_messages <- capture.output(btm_results_studentswithsolution <- sirt::btm(
+  data = students_withsolutions %>%
+    select(candidate_chosen, candidate_not_chosen) %>%
+    mutate(result = 1) %>%
+    data.frame(),
+  maxiter = 400,
+  fix.eta = 0,
+  judge = students_withsolutions$judge
+))
+btm_estimates_studentswithsolution <- btm_results_studentswithsolution$effects %>%
+  select(individual, theta_withsol = theta, se_withsol = se.theta)
+
+# ===============================
+# Fit BTM model for students_withsolutions2
+# ===============================
+sirt_messages <- capture.output(btm_results_studentswithsolution2 <- sirt::btm(
+  data = students_withsolutions2 %>%
+    select(candidate_chosen, candidate_not_chosen) %>%
+    mutate(result = 1) %>%
+    data.frame(),
+  maxiter = 400,
+  fix.eta = 0,
+  judge = students_withsolutions2$judge
+))
+btm_estimates_studentswithsolution2 <- btm_results_studentswithsolution2$effects %>%
+  select(individual, theta_withsol2 = theta, se_withsol2 = se.theta)
+
+# ===============================
+# Merge & Compare
+# ===============================
+comparison_withsolution <- left_join(btm_estimates_studentswithsolution, btm_estimates_studentswithsolution2, by = "individual")
+```
+
+The Pearson correlation between the two theta estimates was moderate, r = 0.64, p = 0.002, suggesting a reasonable level of agreement, although it was notably lower than the correlation observed between the with and without solution groups. This indicates some variability in difficulty rankings between the two groups.
+
+```{r withsol correlation, echo=FALSE}
+# Correlation
+correlation::correlation(
+  comparison_withsolution %>% select(theta_withsol, theta_withsol2),
+  method = "pearson"
+)
+```
+
+Reliability table of the two groups differed. While SSR remained relatively high in both groups (0.813 and 0.757), SHR for group "withsolutions" (0.583) is significantly higher than "withsolutions2" (0.259). This suggests that increasing the number of comparisons per student may have introduced more inconsistency, possibly due to fatigue, reduced attention, or diminishing engagement over time.
+
+```{r SSR+SHR table, echo=FALSE}
+# ===============================
+# SECTION 1: SSR - students_withsolutions & students_withsolutions2
+# ===============================
+ssr_compare_table <- tibble(
+  Dataset = c("students_withsolutions", "students_withsolutions2"),
+  SSR = c(
+    btm_results_studentswithsolution$sepG^2 / (1 + btm_results_studentswithsolution$sepG^2),
+    btm_results_studentswithsolution2$sepG^2 / (1 + btm_results_studentswithsolution2$sepG^2)
+  )
+)
+print(ssr_compare_table)
+
+
+# ===============================
+# SECTION 2: SHR - students_withsolutions & students_withsolutions2
+# ===============================
+compute_split_half_irr <- function(decisions_data) {
+  decisions <- decisions_data %>%
+    mutate(winning_column = 1) %>%
+    select(candidate_chosen, candidate_not_chosen, winning_column, judge)
+  
+  judge_group1 <- decisions %>% distinct(judge) %>% slice_sample(prop = 0.5)
+  judge_group2 <- decisions %>% distinct(judge) %>% anti_join(judge_group1, by = "judge")
+  
+  judgements1 <- decisions %>% semi_join(judge_group1, by = "judge")
+  judgements2 <- decisions %>% semi_join(judge_group2, by = "judge")
+  
+  btm1 <- purrr::quietly(sirt::btm)(judgements1 %>% data.frame(), maxit = 400, fix.eta = 0)$result
+  btm2 <- purrr::quietly(sirt::btm)(judgements2 %>% data.frame(), maxit = 400, fix.eta = 0)$result
+  
+  merged <- merge(btm1$effects, btm2$effects, by = "individual")
+  return(cor(merged$theta.x, merged$theta.y, method = "pearson"))
+}
+
+set.seed(10108)
+shr_compare_table <- tibble(
+  Dataset = c("students_withsolutions", "students_withsolutions2"),
+  SHR = c(
+    median(replicate(100, compute_split_half_irr(students_withsolutions))),
+    median(replicate(100, compute_split_half_irr(students_withsolutions2)))
+  )
+)
+print(shr_compare_table)
+
+
+# ===============================
+# SECTION 3: Raw Score vs Theta
+# ===============================
+compare_raw_vs_theta <- function(btm_result) {
+  btm_result$effects %>%
+    select(theta, propscore) %>%
+    correlation::correlation(method = "pearson", p_adjust = "none")
+}
+
+raw_vs_theta_list <- list(
+  Student1 = btm_results_studentswithsolution,
+  Student2 = btm_results_studentswithsolution2
+)
+
+raw_vs_theta_table <- map_df(names(raw_vs_theta_list), function(name) {
+  res <- correlation::correlation(
+    raw_vs_theta_list[[name]]$effects %>% select(theta, propscore),
+    method = "pearson", p_adjust = "none"
+  )
+  tibble(
+    Dataset = name,
+    r = round(res$r, 3),
+    CI = paste0("[", round(res$CI_low, 3), ", ", round(res$CI_high, 3), "]"),
+    p = signif(res$p, 3)
+  )
+})
+print(raw_vs_theta_table)
+
+
+# ===============================
+# SECTION 4: Combine SSR + SHR
+# ===============================
+reliability_table <- left_join(ssr_compare_table, shr_compare_table, by = "Dataset")
+print(reliability_table)
+```
+
+When comparing 20 and 40 comparisons per student by visualisation, the ranking of perceived difficulty was more stable in the 20-comparison condition. The theta estimates showed a clear and consistent ordering, while in the 40-comparison condition, the ranking became more scattered and inconsistent. This aligns with the much lower SHR value (0.26), suggesting that more comparisons did not improve, and may have reduced, the reliability of student judgements.
+
+```{r withsol plot, echo=FALSE}
+# Add group label to each set of theta estimates
+theta_withsol_long <- btm_estimates_studentswithsolution %>%
+  mutate(judge_group = "20 comparisons") %>%
+  rename(theta = theta_withsol, se = se_withsol)
+
+theta_withsol2_long <- btm_estimates_studentswithsolution2 %>%
+  mutate(judge_group = "40 comparisons") %>%
+  rename(theta = theta_withsol2, se = se_withsol2)
+
+# Combine into one long dataset
+theta_combined <- bind_rows(theta_withsol_long, theta_withsol2_long)
+
+# Use 20-comparison group to define theta-based ordering of individuals
+theta_order <- theta_withsol_long %>%
+  arrange(theta) %>%
+  pull(individual)
+
+# Plot
+theta_combined %>%
+  mutate(
+    individual = factor(individual, levels = theta_order),
+    judge_group = factor(judge_group, levels = c("20 comparisons", "40 comparisons"))
+  ) %>%
+  ggplot(aes(x = theta, y = individual)) +
+  geom_point() +
+  facet_grid(cols = vars(judge_group)) +
+  labs(
+    title = "Perceived Difficulty by Students (20 vs 40 Comparisons)",
+    x = "Theta Estimate",
+    y = "Candidate"
+  ) +
+  theme_minimal()
+
+```
+
+In conclusion, students with access to model solutions produced moderately consistent difficulty rankings across two datasets, as reflected by a correlation of R=0.64 and SSR values above 0.75. However, the notable drop in SHR from 0.58 to 0.26 suggests reduced reliability in individual judgements when students made more comparisons. This indicates that increasing the number of comparisons may introduce inconsistency, even when solutions are provided.
+
+To conclude, students’ difficulty judgments were broadly consistent with or without access to model solutions, with similar SSR and SHR values. However, when the same total number of comparisons was completed by fewer students, internal consistency (SHR) dropped substantially. This suggests that while model solutions have limited impact, distributing comparisons across more students leads to more reliable judgments.
