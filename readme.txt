@@ -1,3 +1,8 @@
+For code reproduction. check `CJReprot1.Rmd` file.
+
+
+Data explaination:
+
 The three "experts" judge groups were recruited from mathematics lecturers and PhD students.
 
 The six "students" judge groups were recruited from a 1st year engineering mathematics class.
